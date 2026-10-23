@@ -1,55 +1,110 @@
-# Limine C Template
+# DossierOS
 
-This repository will demonstrate how to set up a basic kernel in C using Limine.
+DossierOS is a hobby operating system project written primarily in C, built using the Limine bootloader. The project aims to develop a custom operating system from the kernel upward, with a focus on low-level systems programming, kernel development, and creating a graphical user interface.
 
-## How to use this?
+## Getting Started
 
 ### Dependencies
 
-Any `make` command depends on GNU make (`gmake`) and is expected to be run using it. This usually means using `make` on most GNU/Linux distros, or `gmake` on other non-GNU systems.
+DossierOS is developed in a UNIX-like environment. Linux is recommended for building the kernel and generating bootable images.
 
-It is recommended to build this project using a standard UNIX-like system, using a Clang/LLVM toolchain capable of cross compilation.
+The project requires the following tools:
 
-Building also requires `git`, used to fetch the kernel's dependencies (see `kernel/get-deps`), `curl`, used to download the Limine release and the EDK2 OVMF firmware images, and a C compiler for the host (`cc` by default, see the `HOST_CC` `make` variable), used to build the `limine` host utility.
+- **GNU Make** — runs the build system.
+- **Git** — retrieves kernel dependencies.
+- **Clang/LLVM or a compatible C toolchain** — compiles the kernel.
+- **curl** — downloads the required Limine release and EDK2 OVMF firmware images.
+- **A host C compiler** — builds the Limine host utility.
+- **xorriso** — generates bootable ISO images.
+- **sgdisk** — prepares partition tables for HDD images.
+- **mtools** — manages FAT filesystem images.
+- **QEMU** — runs and tests the operating system in a virtual machine.
 
-Additionally, building an ISO with `make all` requires `xorriso`, and building a HDD/USB image with `make all-hdd` requires `sgdisk` (usually from `gdisk` or `gptfdisk` packages) and `mtools`.
+The `nasm` assembler is only required if the project uses `.asm` files. Assembly files with the `.S` extension are compiled using the selected C toolchain.
 
-Assembly files with the `*.S` extension are built using the same toolchain as the C sources. Only `*.asm` files, which are built for `x86_64` alone and of which the template ships none, require `nasm`. The `run` targets require `qemu`.
+On Ubuntu or WSL Ubuntu, the required packages can be installed with:
 
-### Toolchain selection
-
-The `TOOLCHAIN` and `TOOLCHAIN_PREFIX` `make` variables can be used to set the toolchain. `TOOLCHAIN` can be set to `llvm` to use Clang/LLVM.
-
-For example:
+```bash
+sudo apt update
+sudo apt install build-essential git curl xorriso gdisk mtools qemu-system-x86 clang lld nasm
 ```
+
+### Toolchain Configuration
+
+DossierOS supports configurable compiler toolchains through the Makefile variables `TOOLCHAIN` and `TOOLCHAIN_PREFIX`.
+
+To build using Clang/LLVM:
+
+```bash
 make TOOLCHAIN=llvm
 ```
-or:
-```
+
+To use an x86_64 cross-compilation toolchain:
+
+```bash
 make TOOLCHAIN_PREFIX=x86_64-elf-
 ```
 
-The kernel is linked through the compiler driver, using its default linker for GCC and LLD for Clang. A different linker can be picked by adding a `-fuse-ld=` option to `LDFLAGS`.
+The kernel is linked through the compiler driver. GCC uses its configured default linker, while Clang uses LLD. A different linker can be selected through the `LDFLAGS` variable using the appropriate `-fuse-ld=` option.
 
-Link-time optimisation can be enabled by adding `-flto` to `CFLAGS`, for example:
-```
+Link-time optimization can be enabled through `CFLAGS`, for example:
+
+```bash
 make CFLAGS='-g -O2 -pipe -flto'
 ```
 
-### Architectural targets
+### Supported Architectures
 
-The `ARCH` make variable determines the target architecture to build the kernel and image for.
+The `ARCH` Makefile variable specifies the target architecture for the kernel and bootable image.
 
-The default `ARCH` is `x86_64`. Other options include: `aarch64`, `loongarch64`, and `riscv64`.
+The default architecture is `x86_64`. Other architectures supported by the underlying template include:
 
-### Makefile targets
+- `aarch64`
+- `loongarch64`
+- `riscv64`
 
-Running `make all` will compile the kernel (from the `kernel/` directory) and then generate a bootable ISO image.
+Actual support depends on the project's current configuration and the availability of a compatible toolchain.
 
-Running `make all-hdd` will compile the kernel and then generate a raw image suitable to be flashed onto a USB stick or hard drive/SSD.
+### Building DossierOS
 
-Running `make run` will build the kernel and a bootable ISO (equivalent to make all) and then run it using `qemu` (if installed).
+Run the following commands from the project root directory.
 
-Running `make run-hdd` will build the kernel and a raw HDD image (equivalent to make all-hdd) and then run it using `qemu` (if installed).
+**Build a bootable ISO image:**
 
-For x86_64, the `run-bios` and `run-hdd-bios` targets are equivalent to their non `-bios` counterparts except that they boot `qemu` using the default SeaBIOS firmware instead of OVMF.
+```bash
+make all
+```
+
+This compiles the kernel in the `kernel/` directory and generates a bootable ISO image.
+
+**Build a raw HDD or USB image:**
+
+```bash
+make all-hdd
+```
+
+This compiles the kernel and generates a raw disk image suitable for use with a virtual machine or for flashing to a supported storage device.
+
+**Build and run DossierOS in QEMU:**
+
+```bash
+make run
+```
+
+This builds the kernel and ISO image, then launches the operating system in QEMU.
+
+**Build and run the HDD image:**
+
+```bash
+make run-hdd
+```
+
+This builds the raw disk image and launches it in QEMU.
+
+For `x86_64`, the `run-bios` and `run-hdd-bios` targets use the default SeaBIOS firmware instead of OVMF.
+
+### Development
+
+DossierOS is under active development. Build instructions and supported features may change as the kernel and system components evolve.
+
+The project is intended for experimentation, learning, and development in operating system architecture and low-level programming.
